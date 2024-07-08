@@ -6,6 +6,7 @@ class RedisClient {
     this.client.on('error', (err) => {
       console.error('Error: ', err);
     });
+    this.client.on('connect', () => { });
   }
 
   isAlive() {
@@ -46,4 +47,6 @@ class RedisClient {
   }
 }
 
-module.exports = new RedisClient();
+const redisClient = new RedisClient();
+
+module.exports = redisClient;
