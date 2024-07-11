@@ -7,9 +7,10 @@ class RedisClient {
       console.error('Error: ', err);
     });
   //this.client.on('connect', () => { });
-  // this.client.on('connect', () => {
-  //   console.log('Connected!');
-  this.client.connected = true;
+   this.client.on('connect', () => {
+     console.log('Connected!');
+   });
+  // this.client.connected = true;
   }
 
   isAlive() {
