@@ -7,7 +7,7 @@ dotenv.config();
 
 const app = express();
 app.use(bodyParser.json());
-const port = process.env.PORT || 5001; // my mac is running something system-related on 5000
+const port = process.env.PORT; //|| 5001; my mac is running something system-related on 5000
 
 app.use('/', routes);
 
