@@ -34,6 +34,8 @@ RUN curl -sl https://deb.nodesource.com/setup_12.x -o nodesource_setup.sh
 RUN bash nodesource_setup.sh
 
 RUN apt-get update && apt-get install -y nodejs
+RUN npm install
+RUN npm install -g mongosh
 
 # Install redis server and the redis client
 RUN apt-get -y install redis-server
