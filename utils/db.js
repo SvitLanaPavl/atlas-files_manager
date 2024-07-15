@@ -62,6 +62,12 @@ class DBClient {
       return 0;
     }
   }
+  get users() {
+    return this.db.collection('users');
+  }
+  get files() {
+    return this.db.collection('files');
+  }
 }
 
 const dbClient = new DBClient();
