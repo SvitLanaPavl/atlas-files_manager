@@ -18,10 +18,10 @@ class FilesController {
       }
       const user = await dbClient.nbUsers.findOne({ _id: req.user.id });
       if (!user) {
-        return res.status(401). josn({ error: 'Unauthorized' });
+        return res.status(401). json({ error: 'Unauthorized' });
       }
       if (parentId !== 0) {
-        const parentFile = await dbClient.nbFiles.findOne({ _id: parentId });
+        const parentFile = await dbClient.connection.collection('files').findOne({ _id: parentId });
         if (!parentFile) {
           return res.status(400).json({ error: 'Parent not found' });
         }
@@ -47,8 +47,11 @@ class FilesController {
         parentId,
         localPath,
       };
-      const result = await dbClient.nbFiles.insertOne(newFile);
+      const result = await dbClient.connection.collection('files').insertOne(newFile);
       res.status(201).json(result.ops[0]);
+      console.log('Request Body:', req.body);
+      console.log('User ID:', req.user.id);
+
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: 'Internal Server Error' });
