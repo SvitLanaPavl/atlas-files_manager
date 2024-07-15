@@ -13,6 +13,8 @@ console.log('before call AuthController');
 router.get('/connect', AuthController.getConnect);
 router.get('/disconnect', AuthController.getDisconnect);
 router.get('/users/me', UsersController.getMe);
+router.get('/files/:id', authenticate, FilesController.getShow);
+router.get('/files', authenticate, FilesController.getIndex);
 router.post('/files', FilesController.postUpload);
 
 module.exports = router;
