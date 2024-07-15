@@ -3,6 +3,7 @@ import DBClient from '../utils/db';
 import { v4 as uuid4 } from 'uuid';
 
 const sha1 = require('sha1');
+console.log(sha1("toto1234!"));
 
 class AuthController {
     static async getConnect(req, res) {
@@ -23,7 +24,8 @@ class AuthController {
                 email,
                 password: sha1(passwd)
             });
-
+            console.log('Querying for user:', { email, password: sha1(passwd) });
+            console.log('User found:', user);
             if (!user) res.status(401).json({ error: 'Unauthorized' });
             else {
                 const token = uuid4();
