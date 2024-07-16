@@ -24,8 +24,7 @@ class AuthController {
                 email,
                 password: sha1(passwd)
             });
-            console.log('Querying for user:', { email, password: sha1(passwd) });
-            console.log('User found:', user);
+
             if (!user) res.status(401).json({ error: 'Unauthorized' });
             else {
                 const token = uuid4();
