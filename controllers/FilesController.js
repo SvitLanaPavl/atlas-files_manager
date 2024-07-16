@@ -75,14 +75,19 @@ class FilesController {
     const token = req.headers['x-token'];
     console.log(`token: ${token}`);
     const key = `auth_${token}`;
+    console.log(`Key: ${key}`);
     const userId = await RedisClient.get(key);
+    console.log(`UserId: ${userId}`);
     if (!userId) {
       return res.status(401).send({error: 'Unauthorized'});
     }
 
     const { id } = req.params;
+    console.log(`Id: ${id}`);
     const fileId = new mongo.ObjectId(id);
+    console.log(`FileId: ${fileId}`);
     const fileData = await DBClient.client.db().collection('files').findOne({ _id: fileId });
+    console.log(`File data: ${fileData}`);
     if (!fileData) {
       return res.status(404).send({ error: 'Not found' });
     }
@@ -116,6 +121,60 @@ class FilesController {
       ];
       const fileDocuments = await DBClient.client.db().collection('files').aggregate(userfilter).toArray();
       res.status(200).json(fileDocuments);
+    }
+  }
+  static async putPublish(req, res) {
+    try {
+      console.log('in putPublish');
+      const token = req.headers['x-token'];
+      console.log(`token: ${token}`);
+      const userId = await RedisClient.get(`auth_${token}`);
+      console.log(`UserId: ${userId}`);
+      if (!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      const { id } = req.params;
+      console.log(`Id: ${id}`);
+      const fileId = new mongo.ObjectId(id);
+      console.log(`FileId: ${fileId}`);
+      const fileDocument = await DBClient.client.db().collection('files').findOne({ _id: fileId, userId: new mongo.ObjectId(userId)});
+      console.log(`File data: ${fileDocument}`);
+      if (!fileDocument) {
+        return res.status(404).json({ error: 'Not found' });
+      }
+      await DBClient.client.db().collection('files').updateOne({ _id: fileId }, { $set: { isPublic: true } });
+      const updateFile = await DBClient.client.db().collection('files').findOne({ _id: fileId });
+      return res.status(200).json(updateFile);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Internal Server Error' });
+    }
+  }
+  static async putUnpublish(req, res) {
+    try {
+      console.log('in putUnpublish');
+      const token = req.headers['x-token'];
+      console.log(`token: ${token}`);
+      const userId = await RedisClient.get(`auth_${token}`);
+      console.log(`UserId: ${userId}`);
+      if(!userId) {
+        return res.status(401).json({ error: 'Unauthorized' });
+      }
+      const { id } = req.params;
+      console.log(`Id: ${id}`);
+      const fileId = new mongo.ObjectId(id);
+      console.log(`FileId: ${fileId}`);
+      const fileDocument = await DBClient.client.db().collection('files').findOne({ _id: fileId, userId: new mongo.ObjectId(userId)});
+      console.log(`File data: ${fileDocument}`);
+      if (!fileDocument) {
+        return res.status(404).json({ error: 'Not found'});
+      }
+      await DBClient.client.db().collection('files').updateOne({ _id: fileId}, { $set: { isPublic: false }});
+      const updateFile = await DBClient.client.db().collection('files').findOne({ _id: fileId });
+      return res.status(200).json(updateFile);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ error: 'Internal Server Error' });
     }
   }
 }
