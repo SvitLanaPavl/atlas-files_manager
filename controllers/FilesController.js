@@ -1,7 +1,6 @@
 const fs = require('fs');
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
-//const dbClient = require('../utils/db');
 import DBClient from '../utils/db';
 const RedisClient = require('../utils/redis');
 const mongo = require('mongodb');
@@ -23,12 +22,9 @@ class FilesController {
       if (type !== 'folder' && !data) {
         return res.status(400).json({ error: 'Missing data' });
       }
-      // const user = await dbClient.nbUsers.findOne({ _id: req.user.id });
-      // if (!user) {
-      //   return res.status(401). json({ error: 'Unauthorized' });
-      // }
+
       if (parentId !== 0) {
-        const parentFile = await DBClient.connection.collection('files').findOne({ _id: mongo.ObjectID(parentId) });
+        const parentFile = await DBClient.client.db().collection('files').findOne({ _id: mongo.ObjectID(parentId) });
         if (!parentFile) {
           return res.status(400).json({ error: 'Parent not found' });
         }
@@ -47,7 +43,7 @@ class FilesController {
         localPath = path.join(folderPath, fileUUID);
         fs.writeFileSync(localPath, Buffer.from(data, 'base64').toString('utf-8'));
         newFile = await DBClient.client.db().collection('files').insertOne({
-          userID: new mongo.ObjectID(mongoUserId),
+          userID: new mongo.ObjectId(mongoUserId),
           name,
           type,
           isPublic,
@@ -56,24 +52,70 @@ class FilesController {
         });
       } else {
         newFile = await DBClient.client.db().collection('files').insertOne({
-          userID: new mongo.ObjectID(mongoUserId),
+          userID: new mongo.ObjectId(mongoUserId),
           name,
           type,
           isPublic,
           parentId,
         });
       }
-      //const result = await DBClient.connection.collection('files').insertOne(newFile);
-      //res.status(201).json(result.ops[0]);
+
       return res.status(201).send({
         id: newFile.insertedId, userId: mongoUserId, name, type, isPublic, parentId,
       });
-      //console.log('Request Body:', req.body);
-      //console.log('User ID:', req.user.id);
 
     } catch (err) {
       console.error(err);
       res.status(500).json({ error: 'Internal Server Error' });
+    }
+  }
+
+  static async getShow(req, res) {
+    console.log('in getShow');
+    const token = req.headers['x-token'];
+    console.log(`token: ${token}`);
+    const key = `auth_${token}`;
+    const userId = await RedisClient.get(key);
+    if (!userId) {
+      return res.status(401).send({error: 'Unauthorized'});
+    }
+
+    const { id } = req.params;
+    const fileId = new mongo.ObjectId(id);
+    const fileData = await DBClient.client.db().collection('files').findOne({ _id: fileId });
+    if (!fileData) {
+      return res.status(404).send({ error: 'Not found' });
+    }
+    if (userId !== fileData.userId.toString()) {
+      return res.status(404).send({ error: 'Not found' });
+    }
+    const returnedFileData = {
+      id: fileData._id,
+      userId: fileData.userId,
+      name: fileData.name,
+      type: fileData.type,
+      isPublic: fileData.isPublic,
+      parentId: fileData.parentId
+    };
+    return res.send(returnedFileData);
+  }
+
+  static async getIndex(req, res) {
+    const token = req.headers['x-token'];
+    const key = `auth_${token}`;
+    const mongoUserId = await RedisClient.get(key);
+    const { parentId = 0, page = 0 } = req.query;
+    const user = await DBClient.client.db().collection('users').findOne({ _id: new mongo.ObjectId(mongoUserId) });
+    if (!user) {
+      return res.status(401).send({ error: 'Unauthorized' });
+    } else {
+      const userfilter = [
+        { $match: { parentId: parentId, userID: user._id } },
+        { $skip: page * 20 },
+        { $limit: 20 },
+      ];
+      const fileDocuments = await DBClient.client.db().collection('files').aggregate(userfilter).toArray();
+      res.status(200).json(fileDocuments);
     }
   }
 }
