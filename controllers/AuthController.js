@@ -18,7 +18,7 @@ class AuthController {
             };
         
             const [email, passwd] = decode_bs64(b64UserPass).split(':', 2);
-            const databs = await DBClient.connection;
+            const databs = await DBClient.client.db();
             const user = await databs.collection('users').findOne({
                 email,
                 password: sha1(passwd)
