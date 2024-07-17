@@ -4,6 +4,8 @@ const { v4: uuidv4 } = require('uuid');
 import DBClient from '../utils/db';
 const RedisClient = require('../utils/redis');
 const mongo = require('mongodb');
+const mime = require('mime-types');
+const { fileQueue } = require('../routes/index');
 
 class FilesController {
   static async postUpload(req, res) {
@@ -50,6 +52,7 @@ class FilesController {
           parentId,
           localPath,
         });
+        await fileQueue.add({ userId: mongoUserId, fileId: newFile.insertedId });
       } else {
         newFile = await DBClient.client.db().collection('files').insertOne({
           userID: new mongo.ObjectId(mongoUserId),
@@ -126,7 +129,7 @@ class FilesController {
   static async putPublish(req, res) {
     try {
       console.log('in putPublish');
-      const token = req.headers['x-token'];
+      const token = req.headers['x-token']; 
       console.log(`token: ${token}`);
       const userId = await RedisClient.get(`auth_${token}`);
       console.log(`UserId: ${userId}`);
@@ -206,11 +209,12 @@ class FilesController {
         if (file.type === 'folder') {
           res.status(400).json({error: "A folder doesn't have content"});
         } else {
-          const mimeType = contentType(file.name) || 'text/plain';
+          const mimeType = mime.lookup(file.name) || 'text/plain';
           const filePath = file.localPath;
-
+          console.log(`File path: ${filePath}`)
           fs.readFile(filePath, 'utf-8', (err, fileContent) => {
             if (err) {
+              console.error(`Error reading file: ${err.message}`);
               res.status(400).json({ error: 'Unable to read contents of the file'});
             } else {
             res.header('Content-Type', mimeType);
