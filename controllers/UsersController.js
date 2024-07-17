@@ -31,7 +31,7 @@ class UsersController {
     const redis_user = await RedisClient.get(key);
     if (!redis_user) res.status(401).json({ error: 'Unauthorized' });
     else {
-      const dtbase = await DBClient.connection;
+      const dtbase = await DBClient.client.db();
       const colection = dtbase.collection('users');
       colection.findOne({ _id: new mongo.ObjectId(redis_user)}, (err, user) => {
         res.status(200).json({ id: user._id, email: user.email });
