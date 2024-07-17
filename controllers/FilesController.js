@@ -4,7 +4,8 @@ const { v4: uuidv4 } = require('uuid');
 import DBClient from '../utils/db';
 const RedisClient = require('../utils/redis');
 const mongo = require('mongodb');
-var mime = require('mime-types');
+const mime = require('mime-types');
+const { fileQueue } = require('../routes/index')
 
 class FilesController {
   static async postUpload(req, res) {
