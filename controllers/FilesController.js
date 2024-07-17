@@ -4,6 +4,7 @@ const { v4: uuidv4 } = require('uuid');
 import DBClient from '../utils/db';
 const RedisClient = require('../utils/redis');
 const mongo = require('mongodb');
+var mime = require('mime-types');
 
 class FilesController {
   static async postUpload(req, res) {
@@ -87,16 +88,16 @@ class FilesController {
     const fileId = new mongo.ObjectId(id);
     console.log(`FileId: ${fileId}`);
     const fileData = await DBClient.client.db().collection('files').findOne({ _id: fileId });
-    console.log(`in getShow File data: ${fileData}`);
+    console.log(`in getShow File data: ${JSON.stringify(fileData)}`);
     if (!fileData) {
       return res.status(404).send({ error: 'Not found' });
     }
-    if (userId !== fileData.userId.toString()) {
+    if (userId !== fileData.userID.toString()) {
       return res.status(404).send({ error: 'Not found' });
     }
     const returnedFileData = {
       id: fileData._id,
-      userId: fileData.userId,
+      userId: fileData.userID,
       name: fileData.name,
       type: fileData.type,
       isPublic: fileData.isPublic,
@@ -137,7 +138,7 @@ class FilesController {
       console.log(`Id: ${id}`);
       const fileId = new mongo.ObjectId(id);
       console.log(`FileId: ${fileId}`);
-      const fileDocument = await DBClient.client.db().collection('files').findOne({ _id: fileId, userId: new mongo.ObjectId(userId)});
+      const fileDocument = await DBClient.client.db().collection('files').findOne({ _id: fileId, userID: new mongo.ObjectId(userId)});
       console.log(`File data: ${fileDocument}`);
       if (!fileDocument) {
         return res.status(404).json({ error: 'Not found' });
@@ -164,7 +165,7 @@ class FilesController {
       console.log(`Id: ${id}`);
       const fileId = new mongo.ObjectId(id);
       console.log(`FileId: ${fileId}`);
-      const fileDocument = await DBClient.client.db().collection('files').findOne({ _id: fileId, userId: new mongo.ObjectId(userId)});
+      const fileDocument = await DBClient.client.db().collection('files').findOne({ _id: fileId, userID: new mongo.ObjectId(userId)});
       console.log(`in putUnpublish File data: ${fileDocument}`);
       if (!fileDocument) {
         return res.status(404).json({ error: 'Not found'});
@@ -200,13 +201,13 @@ class FilesController {
       console.log(`filterQuery: ${filterQuery}`);
       console.log(`file: ${file}`);
       if (!file) return res.status(404).json({ error:'Not found' });
-      if (!file.isPublic && file.userId.toString() !== user._id.toString()) {
+      if (!file.isPublic && file.userID.toString() !== user._id.toString()) {
         return res.status(404).json({ error:'Not found' });
       } else {
         if (file.type === 'folder') {
           res.status(400).json({error: "A folder doesn't have content"});
         } else {
-          const mimeType = contentType(file.name) || 'text/plain';
+          const mimeType = mime.contentType(file.name) || 'text/plain';
           const filePath = file.localPath;
 
           fs.readFile(filePath, 'utf-8', (err, fileContent) => {
