@@ -1,5 +1,5 @@
 const express = require('express');
-const routes = require('./routes/index');
+const { router } = require('./routes/index');
 const dotenv = require('dotenv');
 const bodyParser = require('body-parser');
 
@@ -9,7 +9,7 @@ const app = express();
 app.use(bodyParser.json());
 const port = process.env.PORT; //|| 5001; my mac is running something system-related on 5000
 
-app.use('/', routes);
+app.use('/', router);
 
 app.listen(port, () => {
   console.log(`Server is running on port ${port}`);
