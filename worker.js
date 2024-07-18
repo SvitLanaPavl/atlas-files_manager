@@ -20,7 +20,7 @@ fileQueue.process(async (job) => {
     for (const size of thumbnailWidth) {
         const thumbnail = await imageThumbnail(mongoFile.localPath, { width: size, height: size });
         const imageName = `${fileId}_${size}.jpg`;
-        await DBClient.client.db().collection('users').updateOne({ _id: mongo.ObjectId(userId) }, { $addToset: { [`${thumbnail}.${size}`]: imageName } });
+        await DBClient.client.db().collection('users').updateOne({ _id: mongo.ObjectId(userId) }, { $set: { [`${thumbnail}.${size}`]: imageName } });
     }
 });
 
